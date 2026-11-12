@@ -1,0 +1,43 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths: ["stacks/**"]
+  workflow_dispatch:
+    inputs:
+      bootstrap:
+        description: "Run scripts/bootstrap.sh on the VPS first"
+        type: boolean
+        default: false
+      stack:
+        description: "Stack to deploy (blank = all)"
+        required: false
+
+concurrency: deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      VPS: ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}
+      SSH_KEY: ~/.ssh/vps_key
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/vps_key
+          chmod 600 ~/.ssh/vps_key
+          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Bootstrap VPS
+        if: ${{ inputs.bootstrap }}
+        run: ssh -i ~/.ssh/vps_key "$VPS" 'bash -s' < scripts/bootstrap.sh
+
+      - name: Deploy stacks
+        run: |
+          if [ -n "${{ inputs.stack }}" ]; then stacks="${{ inputs.stack }}"
+          else stacks="proxy $(ls stacks | grep -vx proxy)"; fi
+          for s in $stacks; do echo "::group::$s"; scripts/deploy.sh "$s"; echo "::endgroup::"; done

@@ -1,0 +1,24 @@
+# Caddy reverse proxy with automatic HTTPS. Other stacks join the external
+# "web" network and get routed by adding a block to the Caddyfile.
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [web]
+    mem_limit: 128m
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  web:
+    external: true

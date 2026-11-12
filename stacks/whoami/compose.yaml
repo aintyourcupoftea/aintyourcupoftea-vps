@@ -1,0 +1,11 @@
+# Tiny example app (~5 MB) to prove the proxy works. Delete when not needed.
+services:
+  whoami:
+    image: traefik/whoami:latest
+    restart: unless-stopped
+    networks: [web]
+    mem_limit: 32m
+
+networks:
+  web:
+    external: true

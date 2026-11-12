@@ -1,0 +1,9 @@
+# Replace :80 with a domain (e.g. app.example.com) to get automatic HTTPS
+# once the domain's DNS A record points at the VPS.
+:80 {
+	reverse_proxy whoami:80
+}
+
+# app.example.com {
+# 	reverse_proxy myapp:3000
+# }
